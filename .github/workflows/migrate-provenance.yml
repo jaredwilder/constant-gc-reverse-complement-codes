@@ -1,0 +1,32 @@
+name: One-shot provenance migration
+
+on:
+  push:
+    paths:
+      - '.github/workflows/migrate-provenance.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve exact public mirror source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/jaredwilder/divergent-mirror-mathematics.git /tmp/source
+          mkdir -p provenance/divergent-mirror
+          cp /tmp/source/README.md provenance/divergent-mirror/README.md
+          cp /tmp/source/verify.py provenance/divergent-mirror/verify.py
+          if [ -f /tmp/source/LICENSE ]; then cp /tmp/source/LICENSE provenance/divergent-mirror/LICENSE; fi
+          rm .github/workflows/migrate-provenance.yml
+          git config user.name "Jared Wilder release migration"
+          git config user.email "jared@jaredwilder.com"
+          git add -A
+          git commit -m "Preserve divergent-mirror provenance source"
+          git push
